@@ -2,21 +2,28 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>INDOVP Mini Website Hub</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#121212;color:#eee;}
 .container{max-width:1000px;margin:0 auto;padding:20px;}
-h1{margin-bottom:10px;}
-.tabs{display:flex;gap:10px;margin-bottom:20px;}
-.tab{padding:8px 12px;background:#2a6cf4;color:white;border:none;border-radius:6px;cursor:pointer;}
-.tab.active{background:#1d4bd1;}
-.post{background:#222;padding:12px;margin-bottom:10px;border-radius:8px;}
-.post h3{margin:0 0 4px;}
-.stars{display:flex;gap:4px;margin-top:4px;}
+h1{margin-bottom:15px;text-align:center;}
+.tabs{display:flex;gap:10px;margin-bottom:20px;justify-content:center;}
+.tab{padding:10px 16px;background:#2a6cf4;color:white;border:none;border-radius:8px;cursor:pointer;transition:all 0.3s;}
+.tab:hover{transform:scale(1.05);box-shadow:0 0 10px #2a6cf4;}
+.tab.active{background:#1d4bd1;box-shadow:0 0 15px #1d4bd1;}
+#pageContainer{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;}
+.pageCard{background:#222;padding:15px;border-radius:10px;min-width:220px;max-width:300px;box-shadow:0 0 8px rgba(0,0,0,0.5);transition:all 0.3s;}
+.pageCard:hover{transform:translateY(-4px);box-shadow:0 0 15px rgba(42,108,244,0.7);}
+.pageCard h3{margin:0 0 8px;}
+.stars{display:flex;gap:3px;margin-top:6px;}
 .star{cursor:pointer;color:gold;font-size:18px;}
-button.small{padding:4px 6px;font-size:12px;margin-left:4px;}
 .owner-btns{margin-top:6px;}
+.createSection{background:#222;padding:15px;border-radius:10px;max-width:500px;margin:20px auto;}
+label{display:block;margin:6px 0;}
+select,input,textarea,button{padding:6px; border-radius:6px; border:none;}
+button{cursor:pointer; transition:all 0.3s;}
+button:hover{transform:scale(1.05);box-shadow:0 0 8px #2a6cf4;}
 </style>
 </head>
 <body>
@@ -27,22 +34,36 @@ button.small{padding:4px 6px;font-size:12px;margin-left:4px;}
 <button class="tab" onclick="switchTab('popular')">Popular</button>
 </div>
 
-<div id="recentTab"></div>
-<div id="popularTab" style="display:none"></div>
+<div id="pageContainer"></div>
 
-<hr>
+<div class="createSection">
 <h3>Create New Page</h3>
-<label>Title: <input type="text" id="newTitle"></label><br>
-<label>HTML Content: <textarea id="newContent" rows="3"></textarea></label><br>
+<label>Title: <input type="text" id="newTitle"></label>
+<label>Premade Component:
+<select id="componentType">
+<option value="text">Text Block</option>
+<option value="button">Button (Link)</option>
+<option value="special">Special Block</option>
+</select></label>
+<label>Color Theme:
+<select id="componentColor">
+<option value="#222">Dark</option>
+<option value="#f0f0f0">Light</option>
+<option value="#2a6cf4">Blue</option>
+<option value="#4caf50">Green</option>
+<option value="#f39c12">Orange</option>
+</select></label>
+<label>Content / Button URL: <input type="text" id="newContent"></label>
 <button onclick="createPage()">Create Page</button>
-
-<p style="margin-top:10px;color:#888;font-size:12px">Sexual or inappropriate content will be deleted</p>
+<p style="margin-top:10px;color:#888;font-size:12px">Inappropriate content will be deleted.</p>
+</div>
 </div>
 
 <script>
 let pages=[];
 let ownerMode=false;
 let konami=[38,38,40,40,37,39,37,39,66,65], kIndex=0;
+let currentTab='recent';
 
 document.addEventListener('keydown',(e)=>{
   if(e.keyCode===konami[kIndex]){
@@ -51,45 +72,46 @@ document.addEventListener('keydown',(e)=>{
       ownerMode=true; 
       kIndex=0; 
       alert('Owner Mode activated!');
-      renderTabs(); 
+      renderPages();
     }
   } else kIndex=0;
 });
 
 function switchTab(tab){ 
+  currentTab=tab;
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.tab')[tab==='recent'?0:1].classList.add('active');
-  document.getElementById('recentTab').style.display=tab==='recent'?'block':'none';
-  document.getElementById('popularTab').style.display=tab==='popular'?'block':'none';
-  renderTabs();
+  renderPages();
 }
 
 function createPage(){
-  const t=document.getElementById('newTitle').value.trim();
-  const c=document.getElementById('newContent').value.trim();
-  if(!t||!c){alert('Please enter title and content');return;}
-  pages.push({id:Date.now(),title:t,content:c,created:Date.now(),stars:[],author:'User'});
-  document.getElementById('newTitle').value=''; 
+  const title=document.getElementById('newTitle').value.trim();
+  const content=document.getElementById('newContent').value.trim();
+  const type=document.getElementById('componentType').value;
+  const color=document.getElementById('componentColor').value;
+  if(!title||!content){alert('Enter title and content'); return;}
+  pages.push({id:Date.now(),title,content,type,color,created:Date.now(),stars:[],author:'User'});
+  document.getElementById('newTitle').value='';
   document.getElementById('newContent').value='';
-  renderTabs();
+  renderPages();
 }
 
 function avgStars(p){ if(!p.stars.length) return 0; return p.stars.reduce((a,b)=>a+b.value,0)/p.stars.length; }
 
-function renderTabs(){
-  renderPageList('recentTab',[...pages].sort((a,b)=>b.created-a.created));
-  const top5=[...pages].sort((a,b)=>avgStars(b)-avgStars(a)).slice(0,5);
-  renderPageList('popularTab',top5);
-}
-
-function renderPageList(containerId,list){
-  const div=document.getElementById(containerId);
-  div.innerHTML='';
+function renderPages(){
+  const container=document.getElementById('pageContainer');
+  container.innerHTML='';
+  let list=currentTab==='recent'? [...pages].sort((a,b)=>b.created-a.created) : [...pages].sort((a,b)=>avgStars(b)-avgStars(a)).slice(0,5);
   list.forEach(p=>{
-    const post=document.createElement('div'); 
-    post.className='post';
-    post.innerHTML=`<h3>${p.title}</h3><div>${p.content}</div><div class="stars" id="stars-${p.id}"></div><div class="owner-btns" id="owner-${p.id}"></div>`;
-    div.appendChild(post);
+    const card=document.createElement('div'); 
+    card.className='pageCard'; 
+    card.style.background=p.color;
+    let inner='';
+    if(p.type==='text') inner=`<div>${p.content}</div>`;
+    else if(p.type==='button') inner=`<button onclick="window.open('${p.content}','_blank')">Go</button>`;
+    else if(p.type==='special') inner=`<div style="font-weight:bold;">Special Block!</div>`;
+    card.innerHTML=`<h3>${p.title}</h3>${inner}<div class="stars" id="stars-${p.id}"></div><div class="owner-btns" id="owner-${p.id}"></div>`;
+    container.appendChild(card);
     renderStars(p);
     renderOwnerBtns(p);
   });
@@ -109,7 +131,7 @@ function renderStars(p){
         if(p.stars.find(s=>s.user==='me')) return;
         p.stars.push({user:'me',value:i});
       }
-      renderTabs();
+      renderPages();
     };
     container.appendChild(star);
   }
@@ -118,15 +140,13 @@ function renderStars(p){
 function renderOwnerBtns(p){
   const ownerDiv=document.getElementById('owner-'+p.id);
   if(ownerMode){
-    const delBtn=document.createElement('button'); 
-    delBtn.innerText='Delete'; 
-    delBtn.className='small'; 
-    delBtn.onclick=function(){ pages=pages.filter(x=>x.id!==p.id); renderTabs(); };
+    const delBtn=document.createElement('button'); delBtn.innerText='Delete'; delBtn.className='small'; 
+    delBtn.onclick=function(){ pages=pages.filter(x=>x.id!==p.id); renderPages(); };
     ownerDiv.innerHTML=''; ownerDiv.appendChild(delBtn);
   }
 }
 
-renderTabs();
+renderPages();
 </script>
 </body>
 </html>
