@@ -5,19 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>INDOVP Discord Clone</title>
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#121212;color:#eee;}
-.container{max-width:1000px;margin:0 auto;padding:20px;}
+*{box-sizing:border-box;}
+body{margin:0;font-family:Arial,sans-serif;background:#181818;color:#eee;}
+.container{display:flex;flex-direction:column;max-width:1000px;margin:0 auto;padding:20px;}
 h1,h2,h3{margin:0 0 10px;}
+input,button,select,textarea{margin:5px 0;padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#eee;}
+button{cursor:pointer;background:#2a6cf4;color:white;border:none;}
+button:hover{background:#1d4bd1;}
 #login, #chatInterface{margin-bottom:20px;}
-input,button,select,textarea{margin:5px 0;padding:6px;}
-button{cursor:pointer;}
-.server, .channel, .message, .userDM{border:1px solid #444;padding:6px;margin:4px 0;border-radius:6px;}
+.flex{display:flex;gap:10px;}
+.sidebar{width:200px;background:#222;padding:10px;border-radius:8px;overflow-y:auto;height:400px;}
+.main{flex:1;display:flex;flex-direction:column;gap:10px;}
+.server, .channel, .message, .userDM{padding:8px;margin:4px 0;border-radius:6px;cursor:pointer;}
 .server.active, .channel.active, .userDM.active{background:#2a6cf4;color:white;}
-.message.owner{background:#333;}
-.message.user{background:#222;}
+.server:hover,.channel:hover,.userDM:hover{background:#333;}
+.message.owner{background:#333;padding:6px;border-radius:6px;margin:4px 0;}
+.message.user{background:#222;padding:6px;border-radius:6px;margin:4px 0;}
 .message span.user{font-weight:bold;}
 .owner-btns button{font-size:12px;margin-left:4px;}
-#dmList{max-height:150px;overflow-y:auto;border:1px solid #444;padding:6px;margin-bottom:10px;}
+#messages, #dmMessages{height:200px;overflow-y:auto;border:1px solid #444;padding:6px;border-radius:6px;background:#1e1e1e;}
+#dmList{max-height:150px;overflow-y:auto;border:1px solid #444;padding:6px;margin-bottom:10px;border-radius:6px;background:#222;}
 </style>
 </head>
 <body>
@@ -34,32 +41,42 @@ button{cursor:pointer;}
 </div>
 
 <div id="chatInterface" style="display:none;">
-<h2>Servers</h2>
+<div class="flex">
+<div class="sidebar">
+<h3>Servers</h3>
 <div id="serverList"></div>
 <input type="text" id="newServerName" placeholder="New Server Name">
 <button onclick="createServer()">Create Server</button>
 
-<h2>Channels</h2>
+<h3>Channels</h3>
 <div id="channelList"></div>
 <input type="text" id="newChannelName" placeholder="New Channel Name">
 <button onclick="createChannel()">Create Channel</button>
+</div>
 
+<div class="main">
 <h2>Chat (<span id="currentServer"></span> - <span id="currentChannel"></span>)</h2>
-<div id="messages" style="height:200px;overflow-y:auto;border:1px solid #444;padding:6px;"></div>
-<input type="text" id="chatInput" placeholder="Type a message">
+<div id="messages"></div>
+<div class="flex">
+<input type="text" id="chatInput" placeholder="Type a message" style="flex:1">
 <button onclick="sendMessage()">Send</button>
+</div>
 
 <hr>
 <h2>Direct Messages</h2>
 <div id="dmList"></div>
 <div id="dmChatContainer" style="display:none;">
 <h3>DM with <span id="dmUserName"></span></h3>
-<div id="dmMessages" style="height:150px;overflow-y:auto;border:1px solid #444;padding:6px;"></div>
-<input type="text" id="dmInput" placeholder="Type a DM">
-<button onclick="sendDM()">Send DM</button>
+<div id="dmMessages"></div>
+<div class="flex">
+<input type="text" id="dmInput" placeholder="Type a DM" style="flex:1">
+<button onclick="sendDM()">Send</button>
+</div>
 </div>
 
 <p id="ownerMsg"></p>
+</div>
+</div>
 </div>
 
 <script>
