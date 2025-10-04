@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -36,7 +36,7 @@ button.small{padding:4px 6px;font-size:12px;margin-left:4px;}
 <label>HTML Content: <textarea id="newContent" rows="3"></textarea></label><br>
 <button onclick="createPage()">Create Page</button>
 
-<p style="margin-top:10px;color:#888;font-size:12px">Sexual or bad content will be deleted</p>
+<p style="margin-top:10px;color:#888;font-size:12px">Sexual or inappropriate content will be deleted</p>
 </div>
 
 <script>
@@ -45,8 +45,15 @@ let ownerMode=false;
 let konami=[38,38,40,40,37,39,37,39,66,65], kIndex=0;
 
 document.addEventListener('keydown',(e)=>{
-  if(e.keyCode===konami[kIndex]){ kIndex++; if(kIndex===konami.length){ ownerMode=true; kIndex=0; alert('Owner Mode aktiviert!'); renderTabs(); } }
-  else kIndex=0;
+  if(e.keyCode===konami[kIndex]){
+    kIndex++;
+    if(kIndex===konami.length){
+      ownerMode=true; 
+      kIndex=0; 
+      alert('Owner Mode activated!');
+      renderTabs(); 
+    }
+  } else kIndex=0;
 });
 
 function switchTab(tab){ 
@@ -60,9 +67,10 @@ function switchTab(tab){
 function createPage(){
   const t=document.getElementById('newTitle').value.trim();
   const c=document.getElementById('newContent').value.trim();
-  if(!t||!c){alert('Titel und Inhalt eingeben');return;}
+  if(!t||!c){alert('Please enter title and content');return;}
   pages.push({id:Date.now(),title:t,content:c,created:Date.now(),stars:[],author:'User'});
-  document.getElementById('newTitle').value=''; document.getElementById('newContent').value='';
+  document.getElementById('newTitle').value=''; 
+  document.getElementById('newContent').value='';
   renderTabs();
 }
 
@@ -78,7 +86,8 @@ function renderPageList(containerId,list){
   const div=document.getElementById(containerId);
   div.innerHTML='';
   list.forEach(p=>{
-    const post=document.createElement('div'); post.className='post';
+    const post=document.createElement('div'); 
+    post.className='post';
     post.innerHTML=`<h3>${p.title}</h3><div>${p.content}</div><div class="stars" id="stars-${p.id}"></div><div class="owner-btns" id="owner-${p.id}"></div>`;
     div.appendChild(post);
     renderStars(p);
@@ -109,7 +118,9 @@ function renderStars(p){
 function renderOwnerBtns(p){
   const ownerDiv=document.getElementById('owner-'+p.id);
   if(ownerMode){
-    const delBtn=document.createElement('button'); delBtn.innerText='Delete'; delBtn.className='small'; 
+    const delBtn=document.createElement('button'); 
+    delBtn.innerText='Delete'; 
+    delBtn.className='small'; 
     delBtn.onclick=function(){ pages=pages.filter(x=>x.id!==p.id); renderTabs(); };
     ownerDiv.innerHTML=''; ownerDiv.appendChild(delBtn);
   }
