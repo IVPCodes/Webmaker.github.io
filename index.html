@@ -96,7 +96,10 @@ function createPage(){
   renderPages();
 }
 
-function avgStars(p){ if(!p.stars.length) return 0; return p.stars.reduce((a,b)=>a+b.value,0)/p.stars.length; }
+function avgStars(p){
+  if(!p.stars.length) return 0; 
+  return p.stars.reduce((a,b)=>a+b.value,0)/p.stars.length; 
+}
 
 function renderPages(){
   const container=document.getElementById('pageContainer');
@@ -139,7 +142,8 @@ function renderPages(){
 function renderStars(p){
   const container=document.getElementById('stars-'+p.id);
   container.innerHTML='';
-  for(let i=1;i<=5;i++){
+  const maxStars = ownerMode ? 10 : 5;
+  for(let i=1;i<=maxStars;i++){
     const star=document.createElement('span');
     star.innerHTML='★';
     star.className='star';
