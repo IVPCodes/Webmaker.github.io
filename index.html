@@ -2,214 +2,129 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>INDOVP Discord Sim</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sigma's Mini-Games Hub</title>
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#181818;color:#eee;}
-.container{max-width:1000px;margin:0 auto;padding:20px;}
-input,textarea,select{margin:4px 0;padding:6px;border-radius:4px;border:none;}
-button{padding:6px 10px;border:none;border-radius:4px;background:#2a6cf4;color:white;cursor:pointer;margin:2px;}
-button:hover{background:#1d4bd1;}
-#chatInterface{display:none;}
-.chatBox{height:300px;overflow-y:auto;background:#222;padding:10px;border-radius:8px;margin-bottom:6px;}
-.serverList, .channelList, .friendList, .dmList{margin-bottom:10px;}
-.message{margin-bottom:4px;}
-.ownerMessage{color:gold;}
+  body { margin:0; font-family: Arial,sans-serif; background:#121212; color:#eee; transition:0.3s; }
+  header { background:#2a6cf4; padding:15px; text-align:center; font-size:24px; font-weight:bold; }
+  .tab-container { display:flex; justify-content:center; gap:10px; margin:15px 0; }
+  .tab-button { padding:10px 20px; border:none; border-radius:8px; cursor:pointer; background:#333; color:#eee; transition:0.3s; }
+  .tab-button.active { background:#2a6cf4; color:white; box-shadow:0 0 10px rgba(42,108,244,0.7);}
+  .tab-button:hover { background:#444; }
+  .content { max-width:900px; margin:auto; padding:20px; background:#222; border-radius:12px; min-height:400px; }
+  h2 { margin-top:0; }
+  canvas { border:2px solid #444; margin-top:10px; }
+  button { cursor:pointer; padding:6px 10px; border-radius:6px; border:none; margin:4px; }
+  .leaderboard { margin-top:10px; background:#333; padding:10px; border-radius:6px; }
+  .leaderboard h4 { margin:4px 0; }
 </style>
 </head>
 <body>
-<div class="container">
-<h1>INDOVP Discord Sim</h1>
 
-<div id="login">
-<h2>Login / Register</h2>
-<label>Username: <input type="text" id="username"></label><br>
-<label>Password: <input type="password" id="password"></label><br>
-<button onclick="login()">Login</button>
-<button onclick="register()">Register</button>
+<header>Sigma's Mini-Games Hub</header>
+
+<div class="tab-container">
+  <button class="tab-button active" onclick="switchTab('twilight')">Twilight Cat Dash</button>
+  <button class="tab-button" onclick="switchTab('memory')">Memory Hacker</button>
+  <button class="tab-button" onclick="switchTab('painter')">Pixel Painter Battle</button>
+  <button class="tab-button" onclick="switchTab('emoji')">Emoji Chaos</button>
+  <button class="tab-button" onclick="switchTab('maze')">Reaction Maze</button>
+  <button class="tab-button" onclick="switchTab('clicker')">Rogue Clicker</button>
 </div>
 
-<div id="chatInterface">
-<h3>Servers</h3>
-<div class="serverList" id="serverList"></div>
-
-<h3>Channels</h3>
-<div class="channelList" id="channelList"></div>
-
-<h3>Chat</h3>
-<div class="chatBox" id="chatBox"></div>
-<input type="text" id="messageInput" placeholder="Type message...">
-<button onclick="sendMessage()">Send</button>
-
-<h3>Friends</h3>
-<div class="friendList" id="friendList"></div>
-<input type="text" id="addFriendInput" placeholder="Friend Username">
-<button onclick="addFriend()">Add Friend</button>
-
-<h3>DMs</h3>
-<div class="dmList" id="dmList"></div>
-<input type="text" id="dmInput" placeholder="Select friend and type message...">
-<button onclick="sendDM()">Send DM</button>
+<div class="content" id="twilightTab">
+  <h2>Twilight Cat Dash</h2>
+  <canvas id="catDash" width="500" height="300"></canvas>
+  <p id="catDashScore">Score: 0</p>
+  <div class="leaderboard" id="catDashLB"><h4>Leaderboard:</h4></div>
 </div>
+
+<div class="content" id="memoryTab" style="display:none">
+  <h2>Memory Hacker</h2>
+  <p>Type the sequence!</p>
+  <p id="sequenceDisplay"></p>
+  <input type="text" id="memoryInput">
+  <button onclick="checkMemory()">Submit</button>
+  <p id="memoryResult"></p>
+  <div class="leaderboard" id="memoryLB"><h4>Leaderboard:</h4></div>
+</div>
+
+<div class="content" id="painterTab" style="display:none">
+  <h2>Pixel Painter Battle</h2>
+  <canvas id="painterCanvas" width="100" height="100"></canvas>
+  <button onclick="startPainter()">Start</button>
+  <p id="painterScore"></p>
+  <div class="leaderboard" id="painterLB"><h4>Leaderboard:</h4></div>
+</div>
+
+<div class="content" id="emojiTab" style="display:none">
+  <h2>Emoji Chaos</h2>
+  <p>Catch the right emoji!</p>
+  <p id="emojiTarget"></p>
+  <button onclick="catchEmoji()">Catch!</button>
+  <p id="emojiScore">Score: 0</p>
+  <div class="leaderboard" id="emojiLB"><h4>Leaderboard:</h4></div>
+</div>
+
+<div class="content" id="mazeTab" style="display:none">
+  <h2>Reaction Maze</h2>
+  <canvas id="mazeCanvas" width="300" height="300"></canvas>
+  <button onclick="startMaze()">Start</button>
+  <p id="mazeResult"></p>
+  <div class="leaderboard" id="mazeLB"><h4>Leaderboard:</h4></div>
+</div>
+
+<div class="content" id="clickerTab" style="display:none">
+  <h2>Rogue Clicker</h2>
+  <button id="clickBtn" onclick="clickerClick()">Click Me!</button>
+  <p id="clickerScore">Score: 0</p>
+  <div class="leaderboard" id="clickerLB"><h4>Leaderboard:</h4></div>
 </div>
 
 <script>
-let users=[{username:'Sigma',password:'123',friends:[]}];
-let currentUser=null;
-let ownerMode=false;
-
-// Servers & Channels
-let servers=[{name:'Main Server',channels:[{name:'general',messages:[]}]}];
-let currentServer=servers[0];
-let currentChannel=currentServer.channels[0];
-let currentDMUser=null;
-
-// Login/Register
-function register(){
-  let u=document.getElementById('username').value.trim();
-  let p=document.getElementById('password').value.trim();
-  if(!u||!p){alert('Enter username & password'); return;}
-  if(users.find(x=>x.username===u)){alert('Username taken'); return;}
-  users.push({username:u,password:p,friends:[]});
-  alert('Registered! Now login.');
+let tabs=['twilightTab','memoryTab','painterTab','emojiTab','mazeTab','clickerTab'];
+function switchTab(tab){
+  tabs.forEach(t=>document.getElementById(t).style.display='none');
+  document.getElementById(tab+'Tab').style.display='block';
+  document.querySelectorAll('.tab-button').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
 }
 
-function login(){
-  let u=document.getElementById('username').value.trim();
-  let p=document.getElementById('password').value.trim();
-  let user=users.find(x=>x.username===u && x.password===p);
-  if(!user){alert("Invalid login");return;}
-  currentUser=user;
-  document.getElementById('login').style.display='none';
-  document.getElementById('chatInterface').style.display='block';
-  renderServers();
-  renderChannels();
-  renderChat();
-  renderFriendList();
-  renderDMList();
+/* Twilight Cat Dash */
+let catCanvas=document.getElementById('catDash'), catCtx=catCanvas.getContext('2d');
+let catX=50, catY=250, catVel=2, catScore=0;
+let catInterval=setInterval(catDraw,50);
+let obstacles=[];
+function catDraw(){
+  catCtx.fillStyle='#121212'; catCtx.fillRect(0,0,500,300);
+  catCtx.fillStyle='lime'; catCtx.fillRect(catX,catY,20,20);
+  catScore++; document.getElementById('catDashScore').innerText='Score: '+catScore;
 }
-
-// Owner Konami code
-const konami=[38,38,40,40,37,39,37,39,66,65];
-let kIndex=0;
-document.addEventListener('keydown',e=>{
-  if(e.keyCode===konami[kIndex]){
-    kIndex++;
-    if(kIndex===konami.length){
-      ownerMode=true;
-      kIndex=0;
-      alert('Owner Mode activated!');
-    }
-  } else kIndex=0;
+document.addEventListener('keydown',(e)=>{
+  if(e.key==='ArrowUp'||e.key==='w') catY-=20;
+  if(e.key==='ArrowDown'||e.key==='s') catY+=20;
 });
 
-// Render
-function renderServers(){
-  const div=document.getElementById('serverList');
-  div.innerHTML='';
-  servers.forEach((s,i)=>{
-    let btn=document.createElement('button');
-    btn.innerText=s.name;
-    btn.onclick=()=>{currentServer=s; currentChannel=s.channels[0]; renderChannels(); renderChat();}
-    div.appendChild(btn);
-  });
-}
+/* Memory Hacker */
+let memorySeq='', memoryLB=[], memActive=false;
+function generateMemory(){memorySeq=''; for(let i=0;i<5;i++)memorySeq+=Math.floor(Math.random()*9); document.getElementById('sequenceDisplay').innerText=memorySeq; memActive=true;}
+function checkMemory(){ if(!memActive) return; let val=document.getElementById('memoryInput').value; if(val===memorySeq){alert('Correct!'); memoryLB.push(val);} else alert('Wrong!'); memActive=false; document.getElementById('memoryInput').value='';}
 
-function renderChannels(){
-  const div=document.getElementById('channelList');
-  div.innerHTML='';
-  currentServer.channels.forEach((c,i)=>{
-    let btn=document.createElement('button');
-    btn.innerText=c.name;
-    btn.onclick=()=>{currentChannel=c; renderChat();}
-    div.appendChild(btn);
-  });
-}
+/* Pixel Painter Battle */
+let painterCanvas=document.getElementById('painterCanvas'), painterCtx=painterCanvas.getContext('2d');
+function startPainter(){painterCtx.fillStyle='blue'; painterCtx.fillRect(0,0,100,100); document.getElementById('painterScore').innerText='Score: 100';}
 
-function renderChat(){
-  const div=document.getElementById('chatBox');
-  div.innerHTML='';
-  currentChannel.messages.forEach(m=>{
-    let msg=document.createElement('div');
-    msg.className='message';
-    if(m.sender==='Owner' && ownerMode) msg.className+=' ownerMessage';
-    msg.innerText=`${m.sender}: ${m.text}`;
-    div.appendChild(msg);
-  });
-  div.scrollTop=div.scrollHeight;
-}
+/* Emoji Chaos */
+let emojiScore=0; function catchEmoji(){emojiScore+=10; document.getElementById('emojiScore').innerText='Score: '+emojiScore; document.getElementById('emojiTarget').innerText=['😀','😎','🐱','💥'][Math.floor(Math.random()*4)];}
 
-// Messaging
-function sendMessage(){
-  let msg=document.getElementById('messageInput').value.trim();
-  if(!msg) return;
-  if(msg==='/owner') ownerMode=true;
-  currentChannel.messages.push({sender:ownerMode?'Owner':currentUser.username,text:msg});
-  document.getElementById('messageInput').value='';
-  renderChat();
-}
+/* Reaction Maze */
+let mazeCanvas=document.getElementById('mazeCanvas'), mazeCtx=mazeCanvas.getContext('2d');
+function startMaze(){mazeCtx.fillStyle='red'; mazeCtx.fillRect(0,0,300,300); document.getElementById('mazeResult').innerText='Maze Started!';}
 
-// Friends
-function addFriend(){
-  let f=document.getElementById('addFriendInput').value.trim();
-  if(!f||f===currentUser.username){alert("Can't add yourself"); return;}
-  let friend=users.find(u=>u.username===f);
-  if(!friend){alert("User not found"); return;}
-  if(currentUser.friends.includes(f)){alert("Already friends"); return;}
-  currentUser.friends.push(f);
-  renderFriendList();
-  alert('Friend added!');
-}
+/* Rogue Clicker */
+let clickScore=0;
+function clickerClick(){clickScore++; document.getElementById('clickerScore').innerText='Score: '+clickScore;}
 
-function renderFriendList(){
-  const div=document.getElementById('friendList');
-  div.innerHTML='';
-  currentUser.friends.forEach(f=>{
-    let btn=document.createElement('button');
-    btn.innerText=f;
-    btn.onclick=()=>{currentDMUser=f; renderDMList();}
-    div.appendChild(btn);
-  });
-}
-
-// DMs
-let dms={}; // key: username, value: {otherUser: messages[]}
-function sendDM(){
-  if(!currentDMUser){alert('Select friend first'); return;}
-  let msg=document.getElementById('dmInput').value.trim();
-  if(!msg) return;
-  if(!dms[currentUser.username]) dms[currentUser.username]={};
-  if(!dms[currentUser.username][currentDMUser]) dms[currentUser.username][currentDMUser]=[];
-  if(!dms[currentDMUser]) dms[currentDMUser]={};
-  if(!dms[currentDMUser][currentUser.username]) dms[currentDMUser][currentUser.username]=[];
-  let sender=currentUser.username;
-  if(ownerMode) sender='Owner';
-  dms[currentUser.username][currentDMUser].push({sender,text:msg});
-  dms[currentDMUser][currentUser.username].push({sender,text:msg});
-  document.getElementById('dmInput').value='';
-  renderDMList();
-}
-
-function renderDMList(){
-  const div=document.getElementById('dmList');
-  div.innerHTML='';
-  if(!currentDMUser) return;
-  const msgs=dms[currentUser.username]?.[currentDMUser]||[];
-  msgs.forEach(m=>{
-    let msg=document.createElement('div');
-    msg.className='message';
-    if(m.sender==='Owner' && ownerMode) msg.className+=' ownerMessage';
-    msg.innerText=`${m.sender}: ${m.text}`;
-    div.appendChild(msg);
-  });
-  div.scrollTop=div.scrollHeight;
-}
-
-// Auto-update chat every second
-setInterval(()=>{
-  if(currentChannel) renderChat();
-  if(currentDMUser) renderDMList();
-},1000);
 </script>
 </body>
 </html>
