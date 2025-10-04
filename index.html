@@ -3,197 +3,213 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>INDOVP Mini Discord</title>
+<title>INDOVP Discord Sim</title>
 <style>
-body {margin:0;font-family:Arial,sans-serif;background:#18191c;color:#eee;}
-#login, #chatInterface {max-width:1000px;margin:20px auto;padding:20px;background:#242529;border-radius:10px;}
-input, button, select, textarea {margin:5px 0;padding:6px;border-radius:5px;border:none;}
-button {cursor:pointer;background:#2a6cf4;color:white;}
+body{margin:0;font-family:Arial,sans-serif;background:#181818;color:#eee;}
+.container{max-width:1000px;margin:0 auto;padding:20px;}
+input,textarea,select{margin:4px 0;padding:6px;border-radius:4px;border:none;}
+button{padding:6px 10px;border:none;border-radius:4px;background:#2a6cf4;color:white;cursor:pointer;margin:2px;}
 button:hover{background:#1d4bd1;}
-#servers {float:left;width:20%;background:#2f3136;padding:10px;height:400px;overflow:auto;}
-#channels {float:left;width:20%;background:#2f3136;padding:10px;height:400px;overflow:auto;}
-#chat {float:left;width:55%;background:#36393f;padding:10px;height:400px;overflow:auto;}
-#friends {float:right;width:20%;background:#2f3136;padding:10px;height:400px;overflow:auto;}
-.clearfix::after {content:"";clear:both;display:table;}
-.message {margin-bottom:5px;padding:4px;border-bottom:1px solid #444;}
-.owner {color:gold;}
-.dm {color:#2a6cf4;}
+#chatInterface{display:none;}
+.chatBox{height:300px;overflow-y:auto;background:#222;padding:10px;border-radius:8px;margin-bottom:6px;}
+.serverList, .channelList, .friendList, .dmList{margin-bottom:10px;}
+.message{margin-bottom:4px;}
+.ownerMessage{color:gold;}
 </style>
 </head>
 <body>
+<div class="container">
+<h1>INDOVP Discord Sim</h1>
 
 <div id="login">
-<h2>Login</h2>
+<h2>Login / Register</h2>
 <label>Username: <input type="text" id="username"></label><br>
 <label>Password: <input type="password" id="password"></label><br>
 <button onclick="login()">Login</button>
+<button onclick="register()">Register</button>
 </div>
 
-<div id="chatInterface" style="display:none;">
-<div class="clearfix">
-<div id="servers"><h3>Servers</h3></div>
-<div id="channels"><h3>Channels</h3></div>
-<div id="chat"><h3>Chat</h3></div>
-<div id="friends"><h3>Friends</h3></div>
-</div>
-<input type="text" id="chatInput" placeholder="Type a message...">
+<div id="chatInterface">
+<h3>Servers</h3>
+<div class="serverList" id="serverList"></div>
+
+<h3>Channels</h3>
+<div class="channelList" id="channelList"></div>
+
+<h3>Chat</h3>
+<div class="chatBox" id="chatBox"></div>
+<input type="text" id="messageInput" placeholder="Type message...">
 <button onclick="sendMessage()">Send</button>
+
+<h3>Friends</h3>
+<div class="friendList" id="friendList"></div>
+<input type="text" id="addFriendInput" placeholder="Friend Username">
+<button onclick="addFriend()">Add Friend</button>
+
+<h3>DMs</h3>
+<div class="dmList" id="dmList"></div>
+<input type="text" id="dmInput" placeholder="Select friend and type message...">
+<button onclick="sendDM()">Send DM</button>
+</div>
 </div>
 
 <script>
-// --- Users & Login ---
-let users=[{username:'Sigma',password:'123'},{username:'Player1',password:'abc'}];
+let users=[{username:'Sigma',password:'123',friends:[]}];
 let currentUser=null;
 let ownerMode=false;
 
-// --- Servers & Channels ---
-let servers=[
-  {id:1,name:'General',roles:['admin','mod','member'],messages:[],channels:[
-    {id:1,name:'general',messages:[]},{id:2,name:'random',messages:[]}
-  ]}
-];
-let currentServer=null;
-let currentChannel=null;
+// Servers & Channels
+let servers=[{name:'Main Server',channels:[{name:'general',messages:[]}]}];
+let currentServer=servers[0];
+let currentChannel=currentServer.channels[0];
+let currentDMUser=null;
 
-// --- Friends & DMs ---
-let friends=[];
-let dms=[]; // {user:'Player1',messages:[]}
+// Login/Register
+function register(){
+  let u=document.getElementById('username').value.trim();
+  let p=document.getElementById('password').value.trim();
+  if(!u||!p){alert('Enter username & password'); return;}
+  if(users.find(x=>x.username===u)){alert('Username taken'); return;}
+  users.push({username:u,password:p,friends:[]});
+  alert('Registered! Now login.');
+}
 
-// --- Login ---
 function login(){
-    let u=document.getElementById('username').value.trim();
-    let p=document.getElementById('password').value.trim();
-    let user=users.find(x=>x.username===u && x.password===p);
-    if(!user){alert("Invalid login");return;}
-    currentUser=user;
-    document.getElementById('login').style.display='none';
-    document.getElementById('chatInterface').style.display='block';
-    renderServers();
-    renderChannels();
-    renderMessages();
-    renderFriendList();
-    renderDMList();
-
-    // Auto-update messages every second
-    setInterval(()=>{
-        if(currentServer && currentChannel){ renderMessages(); }
-        renderDMList();
-    },1000);
+  let u=document.getElementById('username').value.trim();
+  let p=document.getElementById('password').value.trim();
+  let user=users.find(x=>x.username===u && x.password===p);
+  if(!user){alert("Invalid login");return;}
+  currentUser=user;
+  document.getElementById('login').style.display='none';
+  document.getElementById('chatInterface').style.display='block';
+  renderServers();
+  renderChannels();
+  renderChat();
+  renderFriendList();
+  renderDMList();
 }
 
-// --- Render Servers ---
-function renderServers(){
-    const div=document.getElementById('servers');
-    div.innerHTML='<h3>Servers</h3>';
-    servers.forEach(s=>{
-        const btn=document.createElement('button');
-        btn.innerText=s.name;
-        btn.onclick=()=>{ currentServer=s; currentChannel=s.channels[0]; renderChannels(); renderMessages(); };
-        div.appendChild(btn);
-    });
-}
-
-// --- Render Channels ---
-function renderChannels(){
-    const div=document.getElementById('channels');
-    div.innerHTML='<h3>Channels</h3>';
-    if(!currentServer) return;
-    currentServer.channels.forEach(c=>{
-        const btn=document.createElement('button');
-        btn.innerText=c.name;
-        btn.onclick=()=>{ currentChannel=c; renderMessages(); };
-        div.appendChild(btn);
-    });
-}
-
-// --- Render Messages ---
-function renderMessages(){
-    const div=document.getElementById('chat');
-    div.innerHTML='<h3>Chat</h3>';
-    if(!currentChannel) return;
-    currentChannel.messages.forEach(m=>{
-        const msg=document.createElement('div');
-        msg.className='message';
-        msg.innerHTML=`<strong>${m.user}</strong>: ${m.text}`;
-        if(m.owner) msg.classList.add('owner');
-        div.appendChild(msg);
-    });
-    div.scrollTop=div.scrollHeight;
-}
-
-// --- Send Message ---
-function sendMessage(){
-    if(!currentChannel) return;
-    const input=document.getElementById('chatInput');
-    const text=input.value.trim();
-    if(!text) return;
-    let msg={user:currentUser.username,text:text,owner:false};
-    if(text==='/owner'){ownerMode=true; msg.owner=true; alert('Owner mode activated!');}
-    if(ownerMode) msg.owner=true;
-    currentChannel.messages.push(msg);
-    input.value='';
-    renderMessages();
-}
-
-// --- Friends ---
-function renderFriendList(){
-    const div=document.getElementById('friends');
-    div.innerHTML='<h3>Friends</h3>';
-    friends.forEach(f=>{
-        const btn=document.createElement('button');
-        btn.innerText=f.username;
-        btn.onclick=()=>{ openDM(f.username); };
-        div.appendChild(btn);
-    });
-}
-
-// --- DMs ---
-function openDM(friendName){
-    let dm=dms.find(x=>x.user===friendName);
-    if(!dm){dm={user:friendName,messages:[]}; dms.push(dm);}
-    currentChannel=null;
-    const div=document.getElementById('chat');
-    div.innerHTML=`<h3>DM with ${friendName}</h3>`;
-    dm.messages.forEach(m=>{
-        const msg=document.createElement('div');
-        msg.className='message dm';
-        msg.innerHTML=`<strong>${m.user}</strong>: ${m.text}`;
-        div.appendChild(msg);
-    });
-    div.scrollTop=div.scrollHeight;
-    const input=document.getElementById('chatInput');
-    input.onkeydown=(e)=>{
-        if(e.key==='Enter'){
-            let text=input.value.trim();
-            if(!text) return;
-            dm.messages.push({user:currentUser.username,text:text});
-            if(ownerMode){console.log(`Owner sees DM: ${currentUser.username} -> ${friendName}: ${text}`);}
-            input.value='';
-            renderDMList();
-            openDM(friendName);
-        }
+// Owner Konami code
+const konami=[38,38,40,40,37,39,37,39,66,65];
+let kIndex=0;
+document.addEventListener('keydown',e=>{
+  if(e.keyCode===konami[kIndex]){
+    kIndex++;
+    if(kIndex===konami.length){
+      ownerMode=true;
+      kIndex=0;
+      alert('Owner Mode activated!');
     }
+  } else kIndex=0;
+});
+
+// Render
+function renderServers(){
+  const div=document.getElementById('serverList');
+  div.innerHTML='';
+  servers.forEach((s,i)=>{
+    let btn=document.createElement('button');
+    btn.innerText=s.name;
+    btn.onclick=()=>{currentServer=s; currentChannel=s.channels[0]; renderChannels(); renderChat();}
+    div.appendChild(btn);
+  });
 }
 
-// --- Render DM List ---
+function renderChannels(){
+  const div=document.getElementById('channelList');
+  div.innerHTML='';
+  currentServer.channels.forEach((c,i)=>{
+    let btn=document.createElement('button');
+    btn.innerText=c.name;
+    btn.onclick=()=>{currentChannel=c; renderChat();}
+    div.appendChild(btn);
+  });
+}
+
+function renderChat(){
+  const div=document.getElementById('chatBox');
+  div.innerHTML='';
+  currentChannel.messages.forEach(m=>{
+    let msg=document.createElement('div');
+    msg.className='message';
+    if(m.sender==='Owner' && ownerMode) msg.className+=' ownerMessage';
+    msg.innerText=`${m.sender}: ${m.text}`;
+    div.appendChild(msg);
+  });
+  div.scrollTop=div.scrollHeight;
+}
+
+// Messaging
+function sendMessage(){
+  let msg=document.getElementById('messageInput').value.trim();
+  if(!msg) return;
+  if(msg==='/owner') ownerMode=true;
+  currentChannel.messages.push({sender:ownerMode?'Owner':currentUser.username,text:msg});
+  document.getElementById('messageInput').value='';
+  renderChat();
+}
+
+// Friends
+function addFriend(){
+  let f=document.getElementById('addFriendInput').value.trim();
+  if(!f||f===currentUser.username){alert("Can't add yourself"); return;}
+  let friend=users.find(u=>u.username===f);
+  if(!friend){alert("User not found"); return;}
+  if(currentUser.friends.includes(f)){alert("Already friends"); return;}
+  currentUser.friends.push(f);
+  renderFriendList();
+  alert('Friend added!');
+}
+
+function renderFriendList(){
+  const div=document.getElementById('friendList');
+  div.innerHTML='';
+  currentUser.friends.forEach(f=>{
+    let btn=document.createElement('button');
+    btn.innerText=f;
+    btn.onclick=()=>{currentDMUser=f; renderDMList();}
+    div.appendChild(btn);
+  });
+}
+
+// DMs
+let dms={}; // key: username, value: {otherUser: messages[]}
+function sendDM(){
+  if(!currentDMUser){alert('Select friend first'); return;}
+  let msg=document.getElementById('dmInput').value.trim();
+  if(!msg) return;
+  if(!dms[currentUser.username]) dms[currentUser.username]={};
+  if(!dms[currentUser.username][currentDMUser]) dms[currentUser.username][currentDMUser]=[];
+  if(!dms[currentDMUser]) dms[currentDMUser]={};
+  if(!dms[currentDMUser][currentUser.username]) dms[currentDMUser][currentUser.username]=[];
+  let sender=currentUser.username;
+  if(ownerMode) sender='Owner';
+  dms[currentUser.username][currentDMUser].push({sender,text:msg});
+  dms[currentDMUser][currentUser.username].push({sender,text:msg});
+  document.getElementById('dmInput').value='';
+  renderDMList();
+}
+
 function renderDMList(){
-    const div=document.getElementById('friends');
-    div.innerHTML='<h3>Friends</h3>';
-    friends.forEach(f=>{
-        const btn=document.createElement('button');
-        btn.innerText=f.username;
-        btn.onclick=()=>{ openDM(f.username); };
-        div.appendChild(btn);
-    });
+  const div=document.getElementById('dmList');
+  div.innerHTML='';
+  if(!currentDMUser) return;
+  const msgs=dms[currentUser.username]?.[currentDMUser]||[];
+  msgs.forEach(m=>{
+    let msg=document.createElement('div');
+    msg.className='message';
+    if(m.sender==='Owner' && ownerMode) msg.className+=' ownerMessage';
+    msg.innerText=`${m.sender}: ${m.text}`;
+    div.appendChild(msg);
+  });
+  div.scrollTop=div.scrollHeight;
 }
 
-// --- Add Friend ---
-function addFriend(username){
-    if(!users.find(u=>u.username===username)){alert('No such user'); return;}
-    if(friends.find(f=>f.username===username)){alert('Already friends'); return;}
-    friends.push({username:username});
-    renderFriendList();
-}
+// Auto-update chat every second
+setInterval(()=>{
+  if(currentChannel) renderChat();
+  if(currentDMUser) renderDMList();
+},1000);
 </script>
 </body>
 </html>
