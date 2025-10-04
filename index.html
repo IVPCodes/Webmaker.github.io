@@ -1,175 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>INDOVP Mini Website Builder</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INDOVP Discord Clone</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#121212;color:#eee;}
-.container{max-width:1200px;margin:0 auto;padding:20px;}
-h1{text-align:center;margin-bottom:20px;}
-.tabs{display:flex;gap:10px;margin-bottom:20px;justify-content:center;}
-.tab{padding:10px 16px;background:#2a6cf4;color:white;border:none;border-radius:8px;cursor:pointer;transition:all 0.3s;}
-.tab:hover{transform:scale(1.05);box-shadow:0 0 10px #2a6cf4;}
-.tab.active{background:#1d4bd1;box-shadow:0 0 15px #1d4bd1;}
-#pageContainer{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;}
-.pageCard{background:#222;padding:15px;border-radius:10px;min-width:220px;max-width:300px;box-shadow:0 0 8px rgba(0,0,0,0.5);transition:all 0.3s;cursor:move;}
-.pageCard:hover{transform:translateY(-4px);box-shadow:0 0 15px rgba(42,108,244,0.7);}
-.pageCard h3{margin:0 0 8px;}
-.stars{display:flex;gap:3px;margin-top:6px;}
-.star{cursor:pointer;color:gold;font-size:18px;}
-.owner-btns{margin-top:6px;}
-.createSection{background:#222;padding:15px;border-radius:10px;max-width:600px;margin:20px auto;}
-label{display:block;margin:6px 0;}
-select,input,textarea,button{padding:6px;border-radius:6px;border:none;}
-button{cursor:pointer;transition:all 0.3s;}
-button:hover{transform:scale(1.05);box-shadow:0 0 8px #2a6cf4;}
-.dragging{opacity:0.6;}
+.container{max-width:1000px;margin:0 auto;padding:20px;}
+h1,h2,h3{margin:0 0 10px;}
+#login, #chatInterface{margin-bottom:20px;}
+input,button,select,textarea{margin:5px 0;padding:6px;}
+button{cursor:pointer;}
+.server, .channel, .message{border:1px solid #444;padding:6px;margin:4px 0;border-radius:6px;}
+.server.active, .channel.active{background:#2a6cf4;color:white;}
+.message.owner{background:#333;}
+.message.user{background:#222;}
+.message span.user{font-weight:bold;}
+.owner-btns button{font-size:12px;margin-left:4px;}
 </style>
 </head>
 <body>
 <div class="container">
-<h1>INDOVP Mini Website Builder</h1>
-<div class="tabs">
-<button class="tab active" onclick="switchTab('recent')">Recent</button>
-<button class="tab" onclick="switchTab('popular')">Popular</button>
-</div>
-<div id="pageContainer"></div>
+<h1>INDOVP Discord Clone</h1>
 
-<div class="createSection">
-<h3>Create New Page</h3>
-<label>Title: <input type="text" id="newTitle"></label>
-<label>Premade Component:
-<select id="componentType">
-<option value="text">Text Block</option>
-<option value="button">Button (Link)</option>
-<option value="special">Special Block</option>
-</select></label>
-<label>Color Theme:
-<select id="componentColor">
-<option value="#222">Dark</option>
-<option value="#f0f0f0">Light</option>
-<option value="#2a6cf4">Blue</option>
-<option value="#4caf50">Green</option>
-<option value="#f39c12">Orange</option>
-</select></label>
-<label>Content / Button URL: <input type="text" id="newContent"></label>
-<button onclick="createPage()">Create Page</button>
-<p style="margin-top:10px;color:#888;font-size:12px">Inappropriate content will be deleted.</p>
+<div id="login">
+<h2>Login / Register</h2>
+<label>Username: <input type="text" id="username"></label><br>
+<label>Password: <input type="password" id="password"></label><br>
+<button onclick="register()">Register</button>
+<button onclick="login()">Login</button>
+<p id="loginMsg"></p>
+</div>
+
+<div id="chatInterface" style="display:none;">
+<h2>Servers</h2>
+<div id="serverList"></div>
+<input type="text" id="newServerName" placeholder="New Server Name">
+<button onclick="createServer()">Create Server</button>
+
+<h2>Channels</h2>
+<div id="channelList"></div>
+<input type="text" id="newChannelName" placeholder="New Channel Name">
+<button onclick="createChannel()">Create Channel</button>
+
+<h2>Chat (<span id="currentServer"></span> - <span id="currentChannel"></span>)</h2>
+<div id="messages" style="height:300px;overflow-y:auto;border:1px solid #444;padding:6px;"></div>
+<input type="text" id="chatInput" placeholder="Type a message">
+<button onclick="sendMessage()">Send</button>
+
+<p id="ownerMsg"></p>
 </div>
 </div>
 
 <script>
-let pages=[];
+// ----- Data -----
+let users = JSON.parse(localStorage.getItem('users'))||[];
+let servers = JSON.parse(localStorage.getItem('servers'))||[];
+let currentUser=null;
+let currentServer=null;
+let currentChannel=null;
 let ownerMode=false;
-let konami=[38,38,40,40,37,39,37,39,66,65], kIndex=0;
-let currentTab='recent';
 
-document.addEventListener('keydown',(e)=>{
-  if(e.keyCode===konami[kIndex]){
-    kIndex++;
-    if(kIndex===konami.length){
-      ownerMode=true; 
-      kIndex=0; 
-      alert('Owner Mode activated!');
-      renderPages();
-    }
-  } else kIndex=0;
-});
-
-function switchTab(tab){ 
-  currentTab=tab;
-  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.tab')[tab==='recent'?0:1].classList.add('active');
-  renderPages();
+// ----- Auth -----
+function register(){
+    let u=document.getElementById('username').value.trim();
+    let p=document.getElementById('password').value.trim();
+    if(!u||!p){alert("Enter username and password");return;}
+    if(users.find(x=>x.username===u)){alert("Username exists");return;}
+    users.push({username:u,password:p,owner:false});
+    localStorage.setItem('users',JSON.stringify(users));
+    document.getElementById('loginMsg').innerText="Registered! Login now.";
+}
+function login(){
+    let u=document.getElementById('username').value.trim();
+    let p=document.getElementById('password').value.trim();
+    let user=users.find(x=>x.username===u && x.password===p);
+    if(!user){alert("Invalid login");return;}
+    currentUser=user;
+    document.getElementById('login').style.display='none';
+    document.getElementById('chatInterface').style.display='block';
+    renderServers();
+    renderChannels();
+    renderMessages();
 }
 
-function createPage(){
-  const title=document.getElementById('newTitle').value.trim();
-  const content=document.getElementById('newContent').value.trim();
-  const type=document.getElementById('componentType').value;
-  const color=document.getElementById('componentColor').value;
-  if(!title||!content){alert('Enter title and content'); return;}
-  pages.push({id:Date.now(),title,content,type,color,created:Date.now(),stars:[],author:'User'});
-  document.getElementById('newTitle').value='';
-  document.getElementById('newContent').value='';
-  renderPages();
+// ----- Server / Channels -----
+function createServer(){
+    let name=document.getElementById('newServerName').value.trim();
+    if(!name)return;
+    let s={id:Date.now(),name:name,channels:[],messages:{}};
+    servers.push(s);
+    localStorage.setItem('servers',JSON.stringify(servers));
+    document.getElementById('newServerName').value='';
+    renderServers();
 }
-
-function avgStars(p){
-  if(!p.stars.length) return 0; 
-  return p.stars.reduce((a,b)=>a+b.value,0)/p.stars.length; 
+function createChannel(){
+    if(!currentServer){alert("Select a server"); return;}
+    let name=document.getElementById('newChannelName').value.trim();
+    if(!name)return;
+    currentServer.channels.push({name:name});
+    currentServer.messages[name]=[];
+    localStorage.setItem('servers',JSON.stringify(servers));
+    document.getElementById('newChannelName').value='';
+    renderChannels();
 }
-
-function renderPages(){
-  const container=document.getElementById('pageContainer');
-  container.innerHTML='';
-  let list=currentTab==='recent'? [...pages].sort((a,b)=>b.created-a.created) : [...pages].sort((a,b)=>avgStars(b)-avgStars(a)).slice(0,5);
-  list.forEach((p,index)=>{
-    const card=document.createElement('div'); 
-    card.className='pageCard'; 
-    card.style.background=p.color;
-    card.draggable=true;
-    card.dataset.index=index;
-    let inner='';
-    if(p.type==='text') inner=`<div>${p.content}</div>`;
-    else if(p.type==='button') inner=`<button onclick="window.open('${p.content}','_blank')">Go</button>`;
-    else if(p.type==='special') inner=`<div style="font-weight:bold;">Special Block!</div>`;
-    card.innerHTML=`<h3>${p.title}</h3>${inner}<div class="stars" id="stars-${p.id}"></div><div class="owner-btns" id="owner-${p.id}"></div>`;
-    container.appendChild(card);
-    renderStars(p);
-    renderOwnerBtns(p);
-
-    card.addEventListener('dragstart', e=>{ card.classList.add('dragging'); });
-    card.addEventListener('dragend', e=>{ card.classList.remove('dragging'); });
-  });
-
-  // Drag & Drop reorder
-  let dragged=null;
-  container.querySelectorAll('.pageCard').forEach(card=>{
-    card.addEventListener('dragstart',()=>{ dragged=card; });
-    card.addEventListener('dragover',e=>{ e.preventDefault(); });
-    card.addEventListener('drop',()=>{
-      if(dragged===card) return;
-      const from=dragged.dataset.index*1;
-      const to=card.dataset.index*1;
-      pages.splice(to,0,pages.splice(from,1)[0]);
-      renderPages();
+function renderServers(){
+    const div=document.getElementById('serverList'); div.innerHTML='';
+    servers.forEach(s=>{
+        let b=document.createElement('div'); b.className='server'+(s===currentServer?' active':'');
+        b.innerText=s.name; b.onclick=()=>{currentServer=s;currentChannel=null;renderServers(); renderChannels(); renderMessages();}
+        div.appendChild(b);
     });
-  });
+    document.getElementById('currentServer').innerText=currentServer?currentServer.name:'None';
+}
+function renderChannels(){
+    const div=document.getElementById('channelList'); div.innerHTML='';
+    if(!currentServer) return;
+    currentServer.channels.forEach(c=>{
+        let b=document.createElement('div'); b.className='channel'+(c===currentChannel?' active':'');
+        b.innerText=c.name; b.onclick=()=>{currentChannel=c;renderChannels(); renderMessages();}
+        div.appendChild(b);
+    });
+    document.getElementById('currentChannel').innerText=currentChannel?currentChannel.name:'None';
 }
 
-function renderStars(p){
-  const container=document.getElementById('stars-'+p.id);
-  container.innerHTML='';
-  const maxStars = ownerMode ? 10 : 5;
-  for(let i=1;i<=maxStars;i++){
-    const star=document.createElement('span');
-    star.innerHTML='★';
-    star.className='star';
-    star.style.opacity=i<=Math.round(avgStars(p))?1:0.3;
-    star.onclick=function(){
-      if(ownerMode){ p.stars.push({user:'owner',value:i}); }
-      else{
-        if(p.stars.find(s=>s.user==='me')) return;
-        p.stars.push({user:'me',value:i});
-      }
-      renderPages();
-    };
-    container.appendChild(star);
-  }
+// ----- Chat -----
+function sendMessage(){
+    if(!currentServer||!currentChannel)return;
+    let msg=document.getElementById('chatInput').value.trim();
+    if(!msg)return;
+    if(msg==='/owner'){ownerMode=true; alert('Owner mode enabled');document.getElementById('ownerMsg').innerText='Owner Mode'; document.getElementById('chatInput').value=''; return;}
+    currentServer.messages[currentChannel.name].push({user:currentUser.username,content:msg,owner:ownerMode});
+    localStorage.setItem('servers',JSON.stringify(servers));
+    document.getElementById('chatInput').value='';
+    renderMessages();
 }
-
-function renderOwnerBtns(p){
-  const ownerDiv=document.getElementById('owner-'+p.id);
-  if(ownerMode){
-    const delBtn=document.createElement('button'); delBtn.innerText='Delete'; delBtn.className='small'; 
-    delBtn.onclick=function(){ pages=pages.filter(x=>x.id!==p.id); renderPages(); };
-    ownerDiv.innerHTML=''; ownerDiv.appendChild(delBtn);
-  }
+function renderMessages(){
+    const div=document.getElementById('messages'); div.innerHTML='';
+    if(!currentServer||!currentChannel) return;
+    currentServer.messages[currentChannel.name].forEach((m,i)=>{
+        let d=document.createElement('div'); d.className='message '+(m.owner?'owner':'user');
+        d.innerHTML=`<span class="user">${m.user}:</span> ${m.content}`;
+        if(ownerMode){
+            let del=document.createElement('button'); del.innerText='Delete'; del.className='small';
+            del.onclick=()=>{currentServer.messages[currentChannel.name].splice(i,1); localStorage.setItem('servers',JSON.stringify(servers)); renderMessages();}
+            d.appendChild(del);
+        }
+        div.appendChild(d);
+    });
 }
-
-renderPages();
 </script>
 </body>
 </html>
