@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>INDOVP Discord Clone</title>
+<title>INDOVP Discord Clone with Friends</title>
 <style>
 *{box-sizing:border-box;}
 body{margin:0;font-family:Arial,sans-serif;background:#181818;color:#eee;}
@@ -52,6 +52,11 @@ button:hover{background:#1d4bd1;}
 <div id="channelList"></div>
 <input type="text" id="newChannelName" placeholder="New Channel Name">
 <button onclick="createChannel()">Create Channel</button>
+
+<h3>Friends</h3>
+<div id="friendList"></div>
+<input type="text" id="friendName" placeholder="Add Friend (username)">
+<button onclick="addFriend()">Add Friend</button>
 </div>
 
 <div class="main">
@@ -96,7 +101,7 @@ function register(){
     let p=document.getElementById('password').value.trim();
     if(!u||!p){alert("Enter username and password");return;}
     if(users.find(x=>x.username===u)){alert("Username exists");return;}
-    users.push({username:u,password:p,owner:false});
+    users.push({username:u,password:p,owner:false,friends:[]});
     localStorage.setItem('users',JSON.stringify(users));
     document.getElementById('loginMsg').innerText="Registered! Login now.";
 }
@@ -111,7 +116,30 @@ function login(){
     renderServers();
     renderChannels();
     renderMessages();
+    renderFriendList();
     renderDMList();
+}
+
+// ----- Friends -----
+function addFriend(){
+    let fname=document.getElementById('friendName').value.trim();
+    if(!fname)return;
+    let fUser=users.find(x=>x.username===fname);
+    if(!fUser){alert("User not found");return;}
+    if(currentUser.friends.includes(fname)){alert("Already a friend");return;}
+    currentUser.friends.push(fname);
+    localStorage.setItem('users',JSON.stringify(users));
+    document.getElementById('friendName').value='';
+    renderFriendList();
+    renderDMList();
+}
+
+function renderFriendList(){
+    const div=document.getElementById('friendList'); div.innerHTML='';
+    currentUser.friends.forEach(f=>{
+        let b=document.createElement('div'); b.className='userDM'; b.innerText=f;
+        div.appendChild(b);
+    });
 }
 
 // ----- Server / Channels -----
@@ -183,8 +211,8 @@ function renderMessages(){
 // ----- DMs -----
 function renderDMList(){
     const div=document.getElementById('dmList'); div.innerHTML='';
-    users.forEach(u=>{
-        if(u.username===currentUser.username) return;
+    let friendsToShow = ownerMode ? users.filter(u=>u.username!==currentUser.username) : currentUser.friends.map(f=>users.find(u=>u.username===f)).filter(Boolean);
+    friendsToShow.forEach(u=>{
         let b=document.createElement('div'); b.className='userDM';
         b.innerText=u.username; b.onclick=()=>{currentDM=u.username;document.getElementById('dmChatContainer').style.display='block';document.getElementById('dmUserName').innerText=currentDM; renderDMMessages();}
         div.appendChild(b);
@@ -209,7 +237,7 @@ function renderDMMessages(){
     let key1=[currentUser.username,currentDM].sort().join('_');
     let msgs = dmMessages[key1]||[];
     msgs.forEach((m,i)=>{
-        if(!ownerMode && m.to!==currentUser.username && m.from!==currentUser.username) return; // Normal user sees only own DM
+        if(!ownerMode && m.to!==currentUser.username && m.from!==currentUser.username) return;
         let d=document.createElement('div'); d.className='message '+(m.owner?'owner':'user');
         d.innerHTML=`<span class="user">${m.from}:</span> ${m.content}`;
         if(ownerMode){
