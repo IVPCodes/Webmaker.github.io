@@ -2,38 +2,38 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>INDOVP Mini Website Hub</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>INDOVP Mini Website Builder</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#121212;color:#eee;}
-.container{max-width:1000px;margin:0 auto;padding:20px;}
-h1{margin-bottom:15px;text-align:center;}
+.container{max-width:1200px;margin:0 auto;padding:20px;}
+h1{text-align:center;margin-bottom:20px;}
 .tabs{display:flex;gap:10px;margin-bottom:20px;justify-content:center;}
 .tab{padding:10px 16px;background:#2a6cf4;color:white;border:none;border-radius:8px;cursor:pointer;transition:all 0.3s;}
 .tab:hover{transform:scale(1.05);box-shadow:0 0 10px #2a6cf4;}
 .tab.active{background:#1d4bd1;box-shadow:0 0 15px #1d4bd1;}
 #pageContainer{display:flex;flex-wrap:wrap;gap:15px;justify-content:center;}
-.pageCard{background:#222;padding:15px;border-radius:10px;min-width:220px;max-width:300px;box-shadow:0 0 8px rgba(0,0,0,0.5);transition:all 0.3s;}
+.pageCard{background:#222;padding:15px;border-radius:10px;min-width:220px;max-width:300px;box-shadow:0 0 8px rgba(0,0,0,0.5);transition:all 0.3s;cursor:move;}
 .pageCard:hover{transform:translateY(-4px);box-shadow:0 0 15px rgba(42,108,244,0.7);}
 .pageCard h3{margin:0 0 8px;}
 .stars{display:flex;gap:3px;margin-top:6px;}
 .star{cursor:pointer;color:gold;font-size:18px;}
 .owner-btns{margin-top:6px;}
-.createSection{background:#222;padding:15px;border-radius:10px;max-width:500px;margin:20px auto;}
+.createSection{background:#222;padding:15px;border-radius:10px;max-width:600px;margin:20px auto;}
 label{display:block;margin:6px 0;}
-select,input,textarea,button{padding:6px; border-radius:6px; border:none;}
-button{cursor:pointer; transition:all 0.3s;}
+select,input,textarea,button{padding:6px;border-radius:6px;border:none;}
+button{cursor:pointer;transition:all 0.3s;}
 button:hover{transform:scale(1.05);box-shadow:0 0 8px #2a6cf4;}
+.dragging{opacity:0.6;}
 </style>
 </head>
 <body>
 <div class="container">
-<h1>INDOVP Mini Website Hub</h1>
+<h1>INDOVP Mini Website Builder</h1>
 <div class="tabs">
 <button class="tab active" onclick="switchTab('recent')">Recent</button>
 <button class="tab" onclick="switchTab('popular')">Popular</button>
 </div>
-
 <div id="pageContainer"></div>
 
 <div class="createSection">
@@ -102,10 +102,12 @@ function renderPages(){
   const container=document.getElementById('pageContainer');
   container.innerHTML='';
   let list=currentTab==='recent'? [...pages].sort((a,b)=>b.created-a.created) : [...pages].sort((a,b)=>avgStars(b)-avgStars(a)).slice(0,5);
-  list.forEach(p=>{
+  list.forEach((p,index)=>{
     const card=document.createElement('div'); 
     card.className='pageCard'; 
     card.style.background=p.color;
+    card.draggable=true;
+    card.dataset.index=index;
     let inner='';
     if(p.type==='text') inner=`<div>${p.content}</div>`;
     else if(p.type==='button') inner=`<button onclick="window.open('${p.content}','_blank')">Go</button>`;
@@ -114,6 +116,23 @@ function renderPages(){
     container.appendChild(card);
     renderStars(p);
     renderOwnerBtns(p);
+
+    card.addEventListener('dragstart', e=>{ card.classList.add('dragging'); });
+    card.addEventListener('dragend', e=>{ card.classList.remove('dragging'); });
+  });
+
+  // Drag & Drop reorder
+  let dragged=null;
+  container.querySelectorAll('.pageCard').forEach(card=>{
+    card.addEventListener('dragstart',()=>{ dragged=card; });
+    card.addEventListener('dragover',e=>{ e.preventDefault(); });
+    card.addEventListener('drop',()=>{
+      if(dragged===card) return;
+      const from=dragged.dataset.index*1;
+      const to=card.dataset.index*1;
+      pages.splice(to,0,pages.splice(from,1)[0]);
+      renderPages();
+    });
   });
 }
 
