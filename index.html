@@ -11,12 +11,13 @@ h1,h2,h3{margin:0 0 10px;}
 #login, #chatInterface{margin-bottom:20px;}
 input,button,select,textarea{margin:5px 0;padding:6px;}
 button{cursor:pointer;}
-.server, .channel, .message{border:1px solid #444;padding:6px;margin:4px 0;border-radius:6px;}
-.server.active, .channel.active{background:#2a6cf4;color:white;}
+.server, .channel, .message, .userDM{border:1px solid #444;padding:6px;margin:4px 0;border-radius:6px;}
+.server.active, .channel.active, .userDM.active{background:#2a6cf4;color:white;}
 .message.owner{background:#333;}
 .message.user{background:#222;}
 .message span.user{font-weight:bold;}
 .owner-btns button{font-size:12px;margin-left:4px;}
+#dmList{max-height:150px;overflow-y:auto;border:1px solid #444;padding:6px;margin-bottom:10px;}
 </style>
 </head>
 <body>
@@ -44,22 +45,33 @@ button{cursor:pointer;}
 <button onclick="createChannel()">Create Channel</button>
 
 <h2>Chat (<span id="currentServer"></span> - <span id="currentChannel"></span>)</h2>
-<div id="messages" style="height:300px;overflow-y:auto;border:1px solid #444;padding:6px;"></div>
+<div id="messages" style="height:200px;overflow-y:auto;border:1px solid #444;padding:6px;"></div>
 <input type="text" id="chatInput" placeholder="Type a message">
 <button onclick="sendMessage()">Send</button>
 
-<p id="ownerMsg"></p>
+<hr>
+<h2>Direct Messages</h2>
+<div id="dmList"></div>
+<div id="dmChatContainer" style="display:none;">
+<h3>DM with <span id="dmUserName"></span></h3>
+<div id="dmMessages" style="height:150px;overflow-y:auto;border:1px solid #444;padding:6px;"></div>
+<input type="text" id="dmInput" placeholder="Type a DM">
+<button onclick="sendDM()">Send DM</button>
 </div>
+
+<p id="ownerMsg"></p>
 </div>
 
 <script>
 // ----- Data -----
 let users = JSON.parse(localStorage.getItem('users'))||[];
 let servers = JSON.parse(localStorage.getItem('servers'))||[];
+let dmMessages = JSON.parse(localStorage.getItem('dmMessages'))||{};
 let currentUser=null;
 let currentServer=null;
 let currentChannel=null;
 let ownerMode=false;
+let currentDM=null;
 
 // ----- Auth -----
 function register(){
@@ -82,6 +94,7 @@ function login(){
     renderServers();
     renderChannels();
     renderMessages();
+    renderDMList();
 }
 
 // ----- Server / Channels -----
@@ -144,6 +157,47 @@ function renderMessages(){
         if(ownerMode){
             let del=document.createElement('button'); del.innerText='Delete'; del.className='small';
             del.onclick=()=>{currentServer.messages[currentChannel.name].splice(i,1); localStorage.setItem('servers',JSON.stringify(servers)); renderMessages();}
+            d.appendChild(del);
+        }
+        div.appendChild(d);
+    });
+}
+
+// ----- DMs -----
+function renderDMList(){
+    const div=document.getElementById('dmList'); div.innerHTML='';
+    users.forEach(u=>{
+        if(u.username===currentUser.username) return;
+        let b=document.createElement('div'); b.className='userDM';
+        b.innerText=u.username; b.onclick=()=>{currentDM=u.username;document.getElementById('dmChatContainer').style.display='block';document.getElementById('dmUserName').innerText=currentDM; renderDMMessages();}
+        div.appendChild(b);
+    });
+}
+
+function sendDM(){
+    if(!currentDM) return;
+    let msg=document.getElementById('dmInput').value.trim();
+    if(!msg) return;
+    let key1=[currentUser.username,currentDM].sort().join('_');
+    if(!dmMessages[key1]) dmMessages[key1]=[];
+    dmMessages[key1].push({from:currentUser.username,to:currentDM,content:msg,owner:ownerMode});
+    localStorage.setItem('dmMessages',JSON.stringify(dmMessages));
+    document.getElementById('dmInput').value='';
+    renderDMMessages();
+}
+
+function renderDMMessages(){
+    const div=document.getElementById('dmMessages'); div.innerHTML='';
+    if(!currentDM) return;
+    let key1=[currentUser.username,currentDM].sort().join('_');
+    let msgs = dmMessages[key1]||[];
+    msgs.forEach((m,i)=>{
+        if(!ownerMode && m.to!==currentUser.username && m.from!==currentUser.username) return; // Normal user sees only own DM
+        let d=document.createElement('div'); d.className='message '+(m.owner?'owner':'user');
+        d.innerHTML=`<span class="user">${m.from}:</span> ${m.content}`;
+        if(ownerMode){
+            let del=document.createElement('button'); del.innerText='Delete'; del.className='small';
+            del.onclick=()=>{msgs.splice(i,1); localStorage.setItem('dmMessages',JSON.stringify(dmMessages)); renderDMMessages();}
             d.appendChild(del);
         }
         div.appendChild(d);
