@@ -2,129 +2,186 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sigma's Mini-Games Hub</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>INDOVP Mini Games Hub</title>
 <style>
-  body { margin:0; font-family: Arial,sans-serif; background:#121212; color:#eee; transition:0.3s; }
-  header { background:#2a6cf4; padding:15px; text-align:center; font-size:24px; font-weight:bold; }
-  .tab-container { display:flex; justify-content:center; gap:10px; margin:15px 0; }
-  .tab-button { padding:10px 20px; border:none; border-radius:8px; cursor:pointer; background:#333; color:#eee; transition:0.3s; }
-  .tab-button.active { background:#2a6cf4; color:white; box-shadow:0 0 10px rgba(42,108,244,0.7);}
-  .tab-button:hover { background:#444; }
-  .content { max-width:900px; margin:auto; padding:20px; background:#222; border-radius:12px; min-height:400px; }
-  h2 { margin-top:0; }
-  canvas { border:2px solid #444; margin-top:10px; }
-  button { cursor:pointer; padding:6px 10px; border-radius:6px; border:none; margin:4px; }
-  .leaderboard { margin-top:10px; background:#333; padding:10px; border-radius:6px; }
-  .leaderboard h4 { margin:4px 0; }
+body{margin:0;font-family:Arial,sans-serif;background:#121212;color:#eee;}
+.container{max-width:1000px;margin:0 auto;padding:20px;}
+h1{margin-bottom:20px;text-align:center;color:#2a6cf4;}
+.tabs{display:flex;gap:10px;margin-bottom:20px;justify-content:center;}
+.tab{padding:10px 20px;background:#2a6cf4;color:white;border:none;border-radius:6px;cursor:pointer;transition:0.3s;}
+.tab.active{background:#1d4bd1;box-shadow:0 0 10px #2a6cf4;}
+.content{background:#222;padding:20px;border-radius:10px;min-height:400px;transition:0.3s;}
+button{cursor:pointer;}
+canvas{background:#111;margin-top:10px;border-radius:8px;}
+.leaderboard{margin-top:10px;background:#333;padding:10px;border-radius:6px;}
+.lb-entry{display:flex;justify-content:space-between;padding:2px 0;}
 </style>
 </head>
 <body>
-
-<header>Sigma's Mini-Games Hub</header>
-
-<div class="tab-container">
-  <button class="tab-button active" onclick="switchTab('twilight')">Twilight Cat Dash</button>
-  <button class="tab-button" onclick="switchTab('memory')">Memory Hacker</button>
-  <button class="tab-button" onclick="switchTab('painter')">Pixel Painter Battle</button>
-  <button class="tab-button" onclick="switchTab('emoji')">Emoji Chaos</button>
-  <button class="tab-button" onclick="switchTab('maze')">Reaction Maze</button>
-  <button class="tab-button" onclick="switchTab('clicker')">Rogue Clicker</button>
+<div class="container">
+<h1>INDOVP Mini Games Hub</h1>
+<div class="tabs">
+<button class="tab active" onclick="switchTab('dash')">Twilight Cat Dash</button>
+<button class="tab" onclick="switchTab('memory')">Memory Hacker</button>
+<button class="tab" onclick="switchTab('emoji')">Emoji Chaos</button>
+<button class="tab" onclick="switchTab('reaction')">Reaction Maze</button>
+<button class="tab" onclick="switchTab('painter')">Pixel Painter Battle</button>
 </div>
 
-<div class="content" id="twilightTab">
-  <h2>Twilight Cat Dash</h2>
-  <canvas id="catDash" width="500" height="300"></canvas>
-  <p id="catDashScore">Score: 0</p>
-  <div class="leaderboard" id="catDashLB"><h4>Leaderboard:</h4></div>
-</div>
-
-<div class="content" id="memoryTab" style="display:none">
-  <h2>Memory Hacker</h2>
-  <p>Type the sequence!</p>
-  <p id="sequenceDisplay"></p>
-  <input type="text" id="memoryInput">
-  <button onclick="checkMemory()">Submit</button>
-  <p id="memoryResult"></p>
-  <div class="leaderboard" id="memoryLB"><h4>Leaderboard:</h4></div>
-</div>
-
-<div class="content" id="painterTab" style="display:none">
-  <h2>Pixel Painter Battle</h2>
-  <canvas id="painterCanvas" width="100" height="100"></canvas>
-  <button onclick="startPainter()">Start</button>
-  <p id="painterScore"></p>
-  <div class="leaderboard" id="painterLB"><h4>Leaderboard:</h4></div>
-</div>
-
-<div class="content" id="emojiTab" style="display:none">
-  <h2>Emoji Chaos</h2>
-  <p>Catch the right emoji!</p>
-  <p id="emojiTarget"></p>
-  <button onclick="catchEmoji()">Catch!</button>
-  <p id="emojiScore">Score: 0</p>
-  <div class="leaderboard" id="emojiLB"><h4>Leaderboard:</h4></div>
-</div>
-
-<div class="content" id="mazeTab" style="display:none">
-  <h2>Reaction Maze</h2>
-  <canvas id="mazeCanvas" width="300" height="300"></canvas>
-  <button onclick="startMaze()">Start</button>
-  <p id="mazeResult"></p>
-  <div class="leaderboard" id="mazeLB"><h4>Leaderboard:</h4></div>
-</div>
-
-<div class="content" id="clickerTab" style="display:none">
-  <h2>Rogue Clicker</h2>
-  <button id="clickBtn" onclick="clickerClick()">Click Me!</button>
-  <p id="clickerScore">Score: 0</p>
-  <div class="leaderboard" id="clickerLB"><h4>Leaderboard:</h4></div>
+<div id="dash" class="content"></div>
+<div id="memory" class="content" style="display:none"></div>
+<div id="emoji" class="content" style="display:none"></div>
+<div id="reaction" class="content" style="display:none"></div>
+<div id="painter" class="content" style="display:none"></div>
 </div>
 
 <script>
-let tabs=['twilightTab','memoryTab','painterTab','emojiTab','mazeTab','clickerTab'];
+// Tab switching
 function switchTab(tab){
-  tabs.forEach(t=>document.getElementById(t).style.display='none');
-  document.getElementById(tab+'Tab').style.display='block';
-  document.querySelectorAll('.tab-button').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab')[['dash','memory','emoji','reaction','painter'].indexOf(tab)].classList.add('active');
+  document.querySelectorAll('.content').forEach(c=>c.style.display='none');
+  document.getElementById(tab).style.display='block';
 }
 
-/* Twilight Cat Dash */
-let catCanvas=document.getElementById('catDash'), catCtx=catCanvas.getContext('2d');
-let catX=50, catY=250, catVel=2, catScore=0;
-let catInterval=setInterval(catDraw,50);
-let obstacles=[];
-function catDraw(){
-  catCtx.fillStyle='#121212'; catCtx.fillRect(0,0,500,300);
-  catCtx.fillStyle='lime'; catCtx.fillRect(catX,catY,20,20);
-  catScore++; document.getElementById('catDashScore').innerText='Score: '+catScore;
+// --- Twilight Cat Dash ---
+const dashDiv=document.getElementById('dash');
+dashDiv.innerHTML=`
+<h2>Twilight Cat Dash</h2>
+<canvas id="dashCanvas" width="600" height="200"></canvas>
+<p>Score: <span id="dashScore">0</span></p>
+<button onclick="startDash()">Start</button>
+<div class="leaderboard" id="dashLB"><strong>Leaderboard</strong></div>
+`;
+let dashScore=0,dashInterval,dashPlayer;
+function startDash(){
+  const canvas=document.getElementById('dashCanvas'); const ctx=canvas.getContext('2d');
+  dashScore=0; dashPlayer={x:50,y:150,w:20,h:20,vy:0}; let obs=[];
+  clearInterval(dashInterval);
+  document.getElementById('dashScore').innerText=dashScore;
+  function spawnObs(){ obs.push({x:600,y:160,w:20,h:40}); }
+  let spawnTimer=0;
+  dashInterval=setInterval(()=>{
+    ctx.clearRect(0,0,600,200);
+    // player
+    dashPlayer.vy+=0.8; dashPlayer.y+=dashPlayer.vy;
+    if(dashPlayer.y>180){dashPlayer.y=180;dashPlayer.vy=0;}
+    ctx.fillStyle='lime'; ctx.fillRect(dashPlayer.x,dashPlayer.y,dashPlayer.w,dashPlayer.h);
+    // obstacles
+    spawnTimer++; if(spawnTimer%60===0) spawnObs();
+    for(let i=obs.length-1;i>=0;i--){
+      obs[i].x-=5; ctx.fillStyle='red'; ctx.fillRect(obs[i].x,obs[i].y,obs[i].w,obs[i].h);
+      if(obs[i].x+obs[i].w<0) obs.splice(i,1),dashScore++,document.getElementById('dashScore').innerText=dashScore;
+      if(dashPlayer.x<obs[i].x+obs[i].w && dashPlayer.x+dashPlayer.w>obs[i].x &&
+         dashPlayer.y<obs[i].y+obs[i].h && dashPlayer.y+dashPlayer.h>obs[i].y){
+           clearInterval(dashInterval); addLB('dash',dashScore); alert('Game Over! Score: '+dashScore);
+         }
+    }
+  },1000/60);
+  document.onkeydown=e=>{
+    if(e.key===' ' && dashPlayer.y>=180){ dashPlayer.vy=-12; }
+  }
 }
-document.addEventListener('keydown',(e)=>{
-  if(e.key==='ArrowUp'||e.key==='w') catY-=20;
-  if(e.key==='ArrowDown'||e.key==='s') catY+=20;
-});
 
-/* Memory Hacker */
-let memorySeq='', memoryLB=[], memActive=false;
-function generateMemory(){memorySeq=''; for(let i=0;i<5;i++)memorySeq+=Math.floor(Math.random()*9); document.getElementById('sequenceDisplay').innerText=memorySeq; memActive=true;}
-function checkMemory(){ if(!memActive) return; let val=document.getElementById('memoryInput').value; if(val===memorySeq){alert('Correct!'); memoryLB.push(val);} else alert('Wrong!'); memActive=false; document.getElementById('memoryInput').value='';}
+// --- Memory Hacker ---
+const memoryDiv=document.getElementById('memory');
+memoryDiv.innerHTML=`
+<h2>Memory Hacker</h2>
+<p>Click the sequence in order!</p>
+<div id="memoryBtns"></div>
+<div class="leaderboard" id="memoryLB"><strong>Leaderboard</strong></div>
+`;
+let memorySeq=[],memoryInput=[];
+function startMemory(){ memorySeq=[]; memoryInput=[]; const colors=['red','green','blue','yellow']; for(let i=0;i<5;i++){memorySeq.push(colors[Math.floor(Math.random()*4)]);}
+renderMemoryButtons();
+alert('Memorize the sequence!');
+}
+function renderMemoryButtons(){
+  const div=document.getElementById('memoryBtns'); div.innerHTML='';
+  const colors=['red','green','blue','yellow'];
+  colors.forEach(c=>{
+    const b=document.createElement('button'); b.innerText=c; b.style.background=c;b.style.color='white';b.style.margin='2px';b.onclick=()=>{ memoryInput.push(c); checkMemory(); }; div.appendChild(b);
+  });
+}
+function checkMemory(){
+  for(let i=0;i<memoryInput.length;i++){ if(memoryInput[i]!==memorySeq[i]){ addLB('memory',memoryInput.length); alert('Wrong!'); memoryInput=[]; return; } }
+  if(memoryInput.length===memorySeq.length){ addLB('memory',memorySeq.length); alert('Success!'); memoryInput=[]; }
+}
 
-/* Pixel Painter Battle */
-let painterCanvas=document.getElementById('painterCanvas'), painterCtx=painterCanvas.getContext('2d');
-function startPainter(){painterCtx.fillStyle='blue'; painterCtx.fillRect(0,0,100,100); document.getElementById('painterScore').innerText='Score: 100';}
+// --- Emoji Chaos ---
+const emojiDiv=document.getElementById('emoji');
+emojiDiv.innerHTML=`
+<h2>Emoji Chaos</h2>
+<p>Catch the falling emojis!</p>
+<canvas id="emojiCanvas" width="400" height="300"></canvas>
+<p>Score: <span id="emojiScore">0</span></p>
+<button onclick="startEmoji()">Start</button>
+<div class="leaderboard" id="emojiLB"><strong>Leaderboard</strong></div>
+`;
+let emojiScore=0,emojiInterval,emojis=[];
+function startEmoji(){
+  const canvas=document.getElementById('emojiCanvas'); const ctx=canvas.getContext('2d');
+  emojiScore=0; emojis=[];
+  clearInterval(emojiInterval); document.getElementById('emojiScore').innerText=emojiScore;
+  document.onkeydown=e=>{
+    if(e.key==='ArrowLeft') emojis.forEach(em=>em.x-=20);
+    if(e.key==='ArrowRight') emojis.forEach(em=>em.x+=20);
+  }
+  emojiInterval=setInterval(()=>{
+    ctx.clearRect(0,0,400,300);
+    if(Math.random()<0.02) emojis.push({x:Math.random()*380,y:0,emoji:'😺'});
+    emojis.forEach((em,i)=>{
+      em.y+=3; ctx.font='24px Arial'; ctx.fillText(em.emoji,em.x,em.y);
+      if(em.y>280){ emojis.splice(i,1); }
+      if(em.y>270 && em.y<300 && em.x>180 && em.x<220){ emojiScore++; document.getElementById('emojiScore').innerText=emojiScore; emojis.splice(i,1);}
+    });
+  },1000/60);
+}
 
-/* Emoji Chaos */
-let emojiScore=0; function catchEmoji(){emojiScore+=10; document.getElementById('emojiScore').innerText='Score: '+emojiScore; document.getElementById('emojiTarget').innerText=['😀','😎','🐱','💥'][Math.floor(Math.random()*4)];}
+// --- Reaction Maze ---
+const reactionDiv=document.getElementById('reaction');
+reactionDiv.innerHTML=`
+<h2>Reaction Maze</h2>
+<p>Click when text turns green!</p>
+<button onclick="startReaction()">Start</button>
+<p id="reactionText"></p>
+<div class="leaderboard" id="reactionLB"><strong>Leaderboard</strong></div>
+`;
+let reactionStart,reactionInterval;
+function startReaction(){
+  const text=document.getElementById('reactionText'); text.innerText='Wait...'; text.style.color='white';
+  setTimeout(()=>{
+    text.innerText='CLICK NOW!'; text.style.color='lime'; reactionStart=Date.now();
+    document.onclick=()=>{ let r=Date.now()-reactionStart; addLB('reaction',r); alert('Reaction: '+r+'ms'); document.onclick=null; };
+  },Math.random()*3000+1000);
+}
 
-/* Reaction Maze */
-let mazeCanvas=document.getElementById('mazeCanvas'), mazeCtx=mazeCanvas.getContext('2d');
-function startMaze(){mazeCtx.fillStyle='red'; mazeCtx.fillRect(0,0,300,300); document.getElementById('mazeResult').innerText='Maze Started!';}
+// --- Pixel Painter Battle ---
+const painterDiv=document.getElementById('painter');
+painterDiv.innerHTML=`
+<h2>Pixel Painter Battle</h2>
+<canvas id="painterCanvas" width="400" height="400"></canvas>
+<p>Score: <span id="painterScore">0</span></p>
+<button onclick="startPainter()">Start</button>
+<div class="leaderboard" id="painterLB"><strong>Leaderboard</strong></div>
+`;
+let painterScore=0,painterDrawing=false;
+function startPainter(){
+  const canvas=document.getElementById('painterCanvas'); const ctx=canvas.getContext('2d');
+  painterScore=0; ctx.fillStyle='black'; ctx.fillRect(0,0,400,400);
+  canvas.onmousedown=()=>{ painterDrawing=true; painterScore++; document.getElementById('painterScore').innerText=painterScore; };
+  canvas.onmouseup=()=>{ painterDrawing=false; };
+  canvas.onmousemove=e=>{ if(painterDrawing){ ctx.fillStyle='lime'; ctx.fillRect(e.offsetX,e.offsetY,5,5); } };
+}
 
-/* Rogue Clicker */
-let clickScore=0;
-function clickerClick(){clickScore++; document.getElementById('clickerScore').innerText='Score: '+clickScore;}
-
+// --- Leaderboards ---
+let lb={dash:[],memory:[],emoji:[],reaction:[],painter:[]};
+function addLB(game,score){ lb[game].push(score); lb[game].sort((a,b)=>b-a); if(lb[game].length>5) lb[game].pop(); renderLB(game); }
+function renderLB(game){
+  const div=document.getElementById(game+'LB'); div.innerHTML='<strong>Leaderboard</strong>';
+  lb[game].forEach((s,i)=>{ const e=document.createElement('div'); e.className='lb-entry'; e.innerHTML=`#${i+1}: ${s}`; div.appendChild(e); });
+}
 </script>
 </body>
 </html>
